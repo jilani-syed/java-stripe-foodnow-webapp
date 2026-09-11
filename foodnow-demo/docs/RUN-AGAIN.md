@@ -9,7 +9,7 @@ Stop any previous FoodNow app and Stripe listener before starting replacements. 
 **Terminal 1 — webhook listener**
 
 ```sh
-cd /Users/jilani/Documents/ChatGPT/Stripe/foodnow-demo
+cd /Users/jilani/Documents/projects/stripe/stripe-interview/java-stripe-foodnow-webapp/foodnow-demo
 python3 scripts/run-webhooks.py
 ```
 
@@ -18,7 +18,7 @@ Wait for **Listener ready**. The helper verifies your configured test secret key
 **Terminal 2 — application**
 
 ```sh
-cd /Users/jilani/Documents/ChatGPT/Stripe/foodnow-demo
+cd /Users/jilani/Documents/projects/stripe/stripe-interview/java-stripe-foodnow-webapp/foodnow-demo
 ./scripts/run.sh
 ```
 
