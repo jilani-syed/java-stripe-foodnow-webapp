@@ -1,0 +1,27 @@
+server:
+  address: 127.0.0.1
+  port: ${PORT:4242}
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+      timeout: 8h
+  error:
+    include-message: never
+    include-stacktrace: never
+spring:
+  application:
+    name: foodnow-demo
+stripe:
+  publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+app:
+  order-store-path: ${ORDER_STORE_PATH:data/${FOODNOW_MODE:rehearsal}-orders.json}
+foodnow:
+  mode: ${FOODNOW_MODE:rehearsal}
+  marketplace-store: ${MARKETPLACE_STORE_PATH:data/marketplace-v2-${FOODNOW_MODE:rehearsal}.json}
+  base-url: http://localhost:${PORT:4242}
+  restaurant-account: ${STRIPE_RESTAURANT_ACCOUNT:}
+  courier-account: ${STRIPE_COURIER_ACCOUNT:}
