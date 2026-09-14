@@ -92,3 +92,15 @@ The real checkout now combines Payment Element and Express Checkout for eligible
 A private `.env` template is ready locally. Fill its test keys and webhook secret, change `FOODNOW_MODE=stripe`, and restart using `scripts/run.sh`; both keys must belong to the same Stripe test account/sandbox. Keep the webhook listener running. The UI can verify the account behind the secret key, but only a real test checkout verifies the full publishable-key/webhook path.
 
 For the exact two-terminal restart procedure, account logins, fresh-clone setup and preservation of existing connected-account mappings, see [Run FoodNow again](docs/RUN-AGAIN.md).
+
+## UK and France checkout locales
+
+Use the header's **Checkout locale** selector: `en-US / USD`, `en-GB / GBP`, or `fr-FR / EUR`. This changes actual PaymentIntent currency, currency/date formatting, and French payment form/core checkout labels. The wider application remains English. Existing Chicago restaurants and US partner accounts are retained; this is presentment localization, not a launch of UK/French legal entities or delivery markets.
+
+Menu prices are sample nominal prices in the selected currency (a 16.00 dish costs USD 16.00, GBP 16.00 or EUR 16.00), not FX conversions. Delivery is 3.99 and service 1.99 in that currency. Menu edits affect that common nominal price; independently maintained regional price books, VAT/tax, regional addresses and full-site translation are future extensions.
+
+Orders retain their currency permanently. Switching locale starts a new checkout attempt and filters account/workspace orders, pickup queues and journal entries to the selected currency. Direct order links still display the order's original currency. Legacy orders/journals remain USD. Operations → **Stripe insights** adds an all-currency table with separate paid volume, average paid order value, platform revenue, delivered counts and pending-payment counts; there is no summed cross-currency money metric. Paid share means paid orders / created orders, not issuer authorization rate.
+
+GBP/EUR test payments depend on Stripe account/method eligibility. For transfers, the app checks that Stripe's settlement balance transaction uses the order currency. If Stripe converted it to USD, allocation stops with an FX reconciliation message rather than posting incorrect partner amounts. Enable appropriate multi-currency settlement or implement explicit FX accounting before completing that funds flow. No Stripe account settings are changed automatically.
+
+References: [Stripe currencies](https://docs.stripe.com/currencies), [Connect currency handling](https://docs.stripe.com/connect/currencies).

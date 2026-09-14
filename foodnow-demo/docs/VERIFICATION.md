@@ -34,3 +34,9 @@ The updated Java suite passes **31 tests**, including operations-only risk evide
 Actual account identity, Express Checkout availability, Radar test outcomes and Connect transfers still require user-configured test credentials. No live Stripe account validation or browser testing is claimed for this extension. Evidence counts are fetched FoodNow attempts only, with up to 100 charges per order; unavailable risk data stays unavailable. The UI does not change Radar settings.
 
 Final packaged extension: **116 HTTP/business assertions passed**, including persistence across a server restart. Local application health confirmed after restart in rehearsal mode.
+
+## UK / France locale extension — September 14, 2026
+
+31 Java tests passed. The expanded isolated HTTP suite passed **152 assertions**, including GBP/EUR checkout currency and prices, duplicate requests, rejection of changed-currency retries, historical currency preservation, currency-scoped workspace orders and journals, insight totals, authorization, unsupported locale rejection and persistence after restart. Both changed JavaScript files passed syntax validation. These checks used rehearsal payments; no actual GBP/EUR Stripe payment, wallet or international transfer is claimed as verified. Browser visual QA and full French-site translation were not part of this change.
+
+USD legacy records remain compatible. Real partner allocation now checks Stripe settlement currency and stops when explicit FX reconciliation would be required. See README for nominal demo pricing and supported locale scope.

@@ -13,11 +13,12 @@ def verify(condition, message):
 class Client:
     def __init__(self, role='diner'):
         self.role=role
+        self.locale="en-US"
         self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
         self.csrf=''
         self.csrf=self.get('/api/session')['csrf']
     def call(self, method, path, data=None, expected=200, csrf=True):
-        headers={'X-FoodNow-Portal':self.role}
+        headers={'X-FoodNow-Portal':self.role,'X-FoodNow-Locale':self.locale}
         if csrf: headers['X-CSRF-Token']=self.csrf
         if data is not None: headers['Content-Type']='application/json'
         req=urllib.request.Request(BASE+path, None if data is None else json.dumps(data).encode(),headers,method=method)
@@ -134,5 +135,31 @@ with tempfile.TemporaryDirectory(prefix='foodnow-verify-') as tmp:
         restored=Client('operations').login('ops@foodnow.demo').get('/api/workspace')
         verify(len(restored['orders'])==2 and len(restored['ledger'])==len(ledger),'Orders and journal survive restart')
         verify(any(r['id']==rid and r['approval']=='approved' for r in restored['restaurants']),'Registration survives restart')
+        localized=Client()
+        ops=Client('operations').login('ops@foodnow.demo')
+        for locale,currency in [('en-GB','gbp'),('fr-FR','eur')]:
+            localized.locale=locale
+            request=dict(body,checkoutToken=str(uuid.uuid4()),items=[{'dishId':'4','quantity':1}])
+            result=localized.post('/api/checkout',request)
+            verify(result['currency']==currency and result['amount']==2398,'Locale sets real checkout currency and server price')
+            verify(localized.post('/api/checkout',request)['orderId']==result['orderId'],'Localized checkout retries remain idempotent')
+            localized.post('/api/orders/'+result['orderId']+'/simulate',{'outcome':'succeeded','method':'Card'})
+            localized.locale='en-US'
+            localized.post('/api/checkout',request,400)
+            verify(localized.get('/api/orders/'+result['orderId'])['currency']==currency,'Order retains original currency across locale changes')
+            ops.locale=locale
+            scoped=ops.get('/api/workspace')
+            verify(len(scoped['orders'])==1 and all(o['currency']==currency for o in scoped['orders']),'Dashboard orders do not mix currencies')
+            verify(all(e['currency']==currency for e in scoped['ledger']),'Payable journal is currency scoped')
+            verify(sum(e['debit']-e['credit'] for e in scoped['ledger'])==0,'Localized journal balances')
+        summary=ops.get('/api/insights')
+        verify({x['currency'] for x in summary}=={'usd','gbp','eur'},'Insights explicitly group currencies')
+        verify(all(x['paidVolume']==2398 and x['averageOrderValue']==2398 for x in summary if x['currency']!='usd'),'GBP and EUR insights use independent totals')
+        localized.get('/api/insights',401)
+        localized.locale='de-DE'
+        localized.post('/api/checkout',dict(body,checkoutToken=str(uuid.uuid4())),400)
+        stop();start()
+        summary=Client('operations').login('ops@foodnow.demo').get('/api/insights')
+        verify(all(x['paidVolume']==2398 for x in summary if x['currency']!='usd'),'Localized order currencies and insights survive restart')
         print(f'PASS: {checks} HTTP and business assertions, including restart persistence. Isolated temporary data removed.')
     finally:stop();log.close()
