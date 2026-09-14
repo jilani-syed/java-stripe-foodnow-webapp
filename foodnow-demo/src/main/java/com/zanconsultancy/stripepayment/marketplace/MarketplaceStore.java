@@ -39,7 +39,7 @@ public class MarketplaceStore {
     Map<String,Long> balances = new HashMap<>();
     for (LedgerEntry e : data.ledger) {
       if(e.debit<0 || e.credit<0 || (e.debit>0 && e.credit>0))throw new IllegalStateException("Invalid journal entry");
-      balances.merge(e.journal, e.debit-e.credit, Long::sum);
+      balances.merge(e.journal+":"+e.currency, e.debit-e.credit, Long::sum);
     }
     if(balances.values().stream().anyMatch(n->n!=0))throw new IllegalStateException("Unbalanced journal");
   }
@@ -54,7 +54,7 @@ public class MarketplaceStore {
   public static void history(Order o,String state,String actor,String note){o.history.add(new History(Instant.now().toString(),state,actor,note));}
   public static void journal(Data d,Order o,String key,String description,List<LedgerEntry> entries){
     if(d.ledger.stream().anyMatch(e->e.journal.equals(key)))return;
-    for(LedgerEntry e:entries){e.id=id("entry");e.journal=key;e.orderId=o.id;e.restaurantId=o.restaurantId;e.createdAt=Instant.now().toString();e.description=description;d.ledger.add(e);}
+    for(LedgerEntry e:entries){e.id=id("entry");e.currency=o.currency;e.journal=key;e.orderId=o.id;e.restaurantId=o.restaurantId;e.createdAt=Instant.now().toString();e.description=description;d.ledger.add(e);}
   }
   public static LedgerEntry entry(String account,String partner,long debit,long credit){var e=new LedgerEntry();e.account=account;e.partnerId=partner;e.debit=debit;e.credit=credit;return e;}
   public static void paymentConfirmed(Data d,Order o){
@@ -94,5 +94,5 @@ public class MarketplaceStore {
   public static class Item {public String id,restaurantId,title,description,image;public long amount;public boolean available=true;}
   public static class Order extends OrderRecord {public List<Map<String,Object>> stripeEvidence=new ArrayList<>();public String evidenceCheckedAt;public String buyerId,buyerName,email,address,restaurantId,restaurantName,courierId;public String stage="payment_pending",mode,paymentMethod="",transferAttemptAt;public long subtotal,restaurantEarnings,courierEarnings=399,platformEarnings,processingFee;public boolean feeReconciled;public List<History> history=new ArrayList<>();public Map<String,String> transferDestinations=new HashMap<>();}
   public record History(String at,String state,String actor,String note){}
-  public static class LedgerEntry {public String id,journal,orderId,restaurantId,partnerId,account,description,createdAt;public long debit,credit;}
+  public static class LedgerEntry {public String currency="usd";public String id,journal,orderId,restaurantId,partnerId,account,description,createdAt;public long debit,credit;}
 }
